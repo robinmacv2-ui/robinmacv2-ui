@@ -16,73 +16,42 @@
 [![Offline](https://img.shields.io/badge/mode-OFFLINE-critical?style=flat-square)](https://github.com/robinmacv2-ui/romeo-hydra-core)
 [![Fail-closed](https://img.shields.io/badge/gate-FAIL--CLOSED-black?style=flat-square)](https://github.com/robinmacv2-ui/romeo-hydra-core)
 
+**Agente offline determinista (no LLM)** · Hecho desde Termux aarch64 · Auditable. Sin humo. Solo SHA-256.
+
+> **Skill = capacidad · Gate = permiso · Receipt = prueba**
+
 ---
 
-### Quién soy
+## Qué es
 
-**Luis Angel Vazquez Martinez** — fundador de ROMEO-HYDRA.  
-Arquitectura de agentes offline con gate ex-ante y evidencia SHA-256, construida desde Termux (México), sin equipo ni funding institucional.  
-Un mes de build-in-public: de cero a runtime determinista fail-closed.
+ROMEO-HYDRA es un agente **DFA determinista**, sin red, sin APIs, sin shell libre. Todo comando pasa por dos cerraduras:
 
-### Qué es ROMEO-HYDRA
+| Fase | Comportamiento |
+|------|----------------|
+| **ANTE (Gate)** | parse → `verbo :: ENTIDAD k=v` → allow / deny |
+| **POST (Ledger)** | ALLOW → tool + receipt + ledger · DENY → también deja receipt |
 
-Runtime offline para gobernanza de acciones: **Skill = capacidad · Gate = permiso · Receipt = prueba**.  
-El circuito es dual: **ANTE** (el predicado de admisibilidad decide allow/deny antes de ejecutar) y **POST** (toda decisión deja receipt SHA-256[:16] en ledger append-only).
+Todo queda auditado.
 
-Ejemplo real:
+**Prueba mínima:**
 
-```text
-python3 -m romeo_agent -c "rm :: /tmp"
-→ gate.status = "deny" | reason = "verbo_no_admisible:rm" | receipt = fec70b6e2b51a356
-
-python3 -m romeo_agent -c "echo :: hola"
-→ gate.status = "allow" | reason = "ex_ante_passed" | receipt = 60bdfe3bc7bf600a
+```bash
+python3 -m romeo_agent -c "echo :: hola"   # → ALLOW + receipt
+python3 -m romeo_agent -c "rm :: /tmp"     # → DENY + verbo_no_admisible:rm + receipt
 ```
 
-No hay shell libre. No hay red. No hay APIs externas. Solo Python stdlib.
+**Verbos admisibles C:** `help` · `echo` · `pwd` · `status` · `ls` · `cat` · `hash` · `hashfile` · `log` · `verify` · `score` · `audit`
+
+**Reglas duras:** paths solo bajo ROOT (no `..`, no `/`, no `~`) · stdlib only · Python 3.11+
 
 ---
 
-### Ecosistema (señal, no ruido)
+## Core
 
-| Repo | Rol | Status |
-|------|-----|--------|
-| [romeo-hydra-core](https://github.com/robinmacv2-ui/romeo-hydra-core) | Agente DFA offline · release v0.1.0 | ![Active](https://img.shields.io/badge/status-Active-success?style=flat-square) |
-| [romeo-hydra-master-repository-hub](https://github.com/robinmacv2-ui/romeo-hydra-master-repository-hub) | Producto completo · kernel + pilot + tests + DOI | ![Active](https://img.shields.io/badge/status-Active-success?style=flat-square) |
-| [romeo-hydra](https://github.com/robinmacv2-ui/romeo-hydra) | Núcleo histórico · linaje técnico | ![Linaje](https://img.shields.io/badge/status-Linaje-lightgrey?style=flat-square) |
-| [Romeo_Framework](https://github.com/robinmacv2-ui/Romeo_Framework) | Metodología reproducible (ROMEO) | ![Beta](https://img.shields.io/badge/status-Beta-yellow?style=flat-square) |
-| [Romeo-BANKING](https://github.com/robinmacv2-ui/Romeo-BANKING) | Gobernanza auditable · exploratorio | ![Beta](https://img.shields.io/badge/status-Exploratorio-yellow?style=flat-square) |
-| [Postulado-invarianza-homeostatica](https://github.com/robinmacv2-ui/Postulado-invarianza-homeostatica) | Formalismo DOI · no producto | ![Theory](https://img.shields.io/badge/status-Theory-blue?style=flat-square) |
-
-Índice completo: [`ECOSYSTEM.md`](https://github.com/robinmacv2-ui/romeo-hydra-master-repository-hub/blob/main/ECOSYSTEM.md)
-
----
-
-### Evidencia (Termux · 2026-08-18)
-
-```text
-# DENY
-{"gate":{"reason":"verbo_no_admisible:rm","status":"deny"},"receipt":"fec70b6e2b51a356"}
-
-# ALLOW + determinismo hash
-{"gate":{"reason":"ex_ante_passed","status":"allow"},
- "result":{"sha256":"df733656293a19c54f69093ba916f0a1a2a3c151fc95c13f3a794c2631eeb3a6"},
- "receipt":"60bdfe3bc7bf600a"}
-
-# PATH TRAVERSAL DENY
-{"gate":{"reason":"path_fuera_de_envolvente_root","status":"deny"},"receipt":"dcb1ce8b0b6246e8"}
-```
-
-Receipts verificables con `verify :: <receipt>` sobre el ledger local.
-
----
-
-### Stack
-
-- Python 3.11+ · **stdlib only** en el core  
-- Offline · fail-closed · sin shell libre · Termux aarch64 / laptop  
-- Sintaxis: `verbo :: ENTIDAD k=v`  
-- Verbos C: help · pwd · ls · cat · hash · hashfile · echo · status · log · verify · score · audit
+| | |
+|--|--|
+| **Repo** | [romeo-hydra-core](https://github.com/robinmacv2-ui/romeo-hydra-core) — agente standalone |
+| **Release** | [v0.1.0](https://github.com/robinmacv2-ui/romeo-hydra-core/releases/tag/v0.1.0) · fail-closed · stdlib only |
 
 ```bash
 git clone --branch v0.1.0 --depth 1 https://github.com/robinmacv2-ui/romeo-hydra-core.git
@@ -91,14 +60,90 @@ cd romeo-hydra-core && python3 -m romeo_agent -c "help ::"
 
 ---
 
-### Contacto
+## Ecosistema · 5 capas
 
-- GitHub: [robinmacv2-ui](https://github.com/robinmacv2-ui)
+```text
+                    ┌─────────────────────────────┐
+                    │   robinmacv2-ui  ·  MÉXICO  │
+                    │   OFFLINE · FAIL-CLOSED     │
+                    └─────────────┬───────────────┘
+                                  │
+         ┌────────────────────────┼────────────────────────┐
+         ▼                        ▼                        ▼
+   ┌───────────┐            ┌───────────┐            ┌───────────┐
+   │  CAPA 0   │            │  CAPA 1   │            │  CAPA 2   │
+   │ PRODUCTO  │            │  LINAJE   │            │  TEORÍA   │
+   │  ██████   │            │  CÓDIGO   │            │   DOI     │
+   └─────┬─────┘            └─────┬─────┘            └─────┬─────┘
+         │                        │                        │
+    core v0.1.0              romeo-hydra              Postulado
+    master-hub               Romeo_Framework          Partícula
+    (kernel+pilot+DOI)       hydra.master             Tarjeta / Manifiesto
+         │
+         ├──────────────┐
+         ▼              ▼
+   ┌───────────┐  ┌───────────┐
+   │  CAPA 3   │  │  CAPA 4   │
+   │ BANKING   │  │  OTROS    │
+   │ explorat. │  │           │
+   └───────────┘  └───────────┘
+    Romeo-BANKING   LOOPER-STATION
+```
+
+```text
+robinmacv2-ui
+│
+├── CAPA 0 · PRODUCTO (activos)
+│   ├── romeo-hydra-core              → agente standalone v0.1.0
+│   └── romeo-hydra-master-repository-hub → producto 0.1.2 (kernel + crypto + pilot + DOI)
+│
+├── CAPA 1 · LINAJE CÓDIGO
+│   ├── romeo-hydra · Romeo_Framework · Romeo_Hydra_Framework · hydra.master
+│
+├── CAPA 2 · TEORÍA / DOI
+│   ├── Postulado-invarianza-homeostatica · Part-cula-de-Luis-ngel-
+│   ├── TARJETA-L-GICA-CUANTICA · MANIFIESTO-ONTOLOGICO
+│
+├── CAPA 3 · BANKING (exploratorio)
+│   ├── Romeo-BANKING · ROMEO-HYDRA-BANKING
+│
+└── CAPA 4 · OTROS
+    └── LOOPER-STATION
+```
+
+Índice: [`ECOSYSTEM.md`](https://github.com/robinmacv2-ui/romeo-hydra-master-repository-hub/blob/main/ECOSYSTEM.md)
+
+---
+
+## Evidencia
+
+```text
+# DENY (Termux)
+{"gate":{"reason":"verbo_no_admisible:rm","status":"deny"},"receipt":"fec70b6e2b51a356"}
+
+# ALLOW + hash determinista
+{"gate":{"reason":"ex_ante_passed","status":"allow"},
+ "result":{"sha256":"df733656293a19c54f69093ba916f0a1a2a3c151fc95c13f3a794c2631eeb3a6"},
+ "receipt":"60bdfe3bc7bf600a"}
+
+# PATH TRAVERSAL DENY
+{"gate":{"reason":"path_fuera_de_envolvente_root","status":"deny"},"receipt":"dcb1ce8b0b6246e8"}
+```
+
+**Stack:** Python 3.11 stdlib only · Termux aarch64 / laptop · Offline · Fail-closed  
+**Build in public:** LinkedIn · México · sin funding institucional
+
+---
+
+## Contacto
+
+**Luis Angel Vazquez Martinez** — Creador de ROMEO-HYDRA
+
+- GitHub: [@robinmacv2-ui](https://github.com/robinmacv2-ui)
 - LinkedIn: [luis-angel-vazquez-martinez](https://www.linkedin.com/in/luis-angel-vazquez-martinez-066ba9422)
 - Email: [robinmac.v2@gmail.com](mailto:robinmac.v2@gmail.com)
 - Tel: +52 56 5015 3935
 
 ---
 
-**Auditable. Sin humo. Hecho desde Termux.**  
-Luis Angel Vazquez Martinez · México · 2026
+**Auditable. Offline. Hecho desde Termux.**
